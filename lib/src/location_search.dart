@@ -16,58 +16,58 @@ import 'classes.dart';
 class LocationSearchWidget extends StatefulWidget {
   /// [onPicked] : (callback) is triggered when you click on a location, returns current [PickedData] of the Marker
   ///
-  final void Function(LocationData data)? onPicked;
+  final void Function(LocationData data) onPicked;
 
   /// [onError] : (callback) is triggered when an error occurs while fetching location
   ///
-  final void Function(Exception e)? onError;
+  final void Function(Exception e) onError;
 
   /// [language] : (String) set the language of the map and address text (default = 'en')
   ///
-  final String? language;
+  final String language;
 
   /// [countryCodes] : Limit search results to one or more countries
   ///
-  final List<String>? countryCodes;
+  final List<String> countryCodes;
 
   /// [loadingWidget] : (Widget) show custom  widget until the map finish initialization
   ///
-  final Widget? loadingWidget;
+  final Widget loadingWidget;
 
   /// [searchBarBackgroundColor] : (Color) change the background color of the search bar
   ///
 
-  final Color? searchBarBackgroundColor;
+  final Color searchBarBackgroundColor;
 
   /// [searchBarTextColor] : (Color) change the color of the search bar text
   ///
 
-  final Color? searchBarTextColor;
+  final Color searchBarTextColor;
 
   /// [searchBarHintText] : (String) change the hint text of the search bar
   ///
 
-  final String? searchBarHintText;
+  final String searchBarHintText;
 
   /// [searchBarHintColor] : (Color) change the color of the search bar hint text
   ///
 
-  final Color? searchBarHintColor;
+  final Color searchBarHintColor;
 
   /// [lightAdress] : (bool) if true, displayed and returned adresses will be lighter
   ///
 
-  final bool? lightAdress;
+  final bool lightAdress;
 
   /// [iconColor] : (Color) change the color of the search bar text
   ///
 
-  final Color? iconColor;
+  final Color iconColor;
 
   /// [currentPositionButtonText] : (String) change the text of the button selecting current position
   ///
 
-  final String? currentPositionButtonText;
+  final String currentPositionButtonText;
 
   /// [mode] : mode of display: fullscreen or overlay
   ///
@@ -80,8 +80,8 @@ class LocationSearchWidget extends StatefulWidget {
   final int historyMaxLength;
 
   const LocationSearchWidget({
-    Key? key,
-    required this.onPicked,
+    Key key,
+    this.onPicked,
     this.onError,
     this.language = 'en',
     this.countryCodes,
@@ -94,7 +94,7 @@ class LocationSearchWidget extends StatefulWidget {
     this.iconColor = Colors.grey,
     this.mode = Mode.fullscreen,
     this.historyMaxLength = 5,
-    Widget? loadingWidget,
+    Widget loadingWidget,
   })  : loadingWidget = loadingWidget ?? const CircularProgressIndicator(),
         super(key: key);
 
@@ -108,8 +108,8 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
   final FocusNode _focusNode = FocusNode();
   List<LocationData> _options = <LocationData>[];
   bool isLoading = false;
-  late void Function(Exception e) onError;
-  Timer? _debounce;
+  void Function(Exception e) onError;
+  Timer _debounce;
 
   final _defaultSearchBarColor = Colors.grey[300];
 
@@ -216,7 +216,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
   ///     data (Map): A map of data fetched from OpenStreetMap API
   LocationData _getLocationData(Map data) {
     return LocationData(
-        address: !(widget.lightAdress!)
+        address: !(widget.lightAdress)
             ? data['display_name']
             : (data['address'] as Map)
                 .entries
@@ -278,6 +278,8 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
     super.initState();
     onError = widget.onError ?? (e) => logger.e(e);
     _loadHistory();
+
+    _focusNode.requestFocus();
   }
 
   Widget _buildListView() {
@@ -326,7 +328,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
                     decoration: BoxDecoration(
                         border: Border(
                             bottom:
-                                BorderSide(color: _defaultSearchBarColor!))),
+                                BorderSide(color: _defaultSearchBarColor))),
                     child: Text(
                       items[index].address,
                       style: TextStyle(
@@ -337,7 +339,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
               if (_options.isNotEmpty) _addToHistory(items[index]);
               setAddressInSearchBar(items[index].address);
 
-              widget.onPicked!(items[index]);
+              widget.onPicked(items[index]);
               _focusNode.unfocus();
               _options.clear();
               setState(() {});
@@ -370,7 +372,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
                 focusNode: _focusNode,
                 decoration: InputDecoration(
                   hintText: widget.searchBarHintText,
-                  hintTextDirection: isRTL(widget.searchBarHintText!)
+                  hintTextDirection: isRTL(widget.searchBarHintText)
                       ? TextDirection.rtl
                       : TextDirection.ltr,
                   border: InputBorder.none,
@@ -390,25 +392,25 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
                   setState(() {});
                   _debounce =
                       Timer(const Duration(milliseconds: 300), () async {
-                    var client = http.Client();
-                    try {
-                      String url =
-                          "https://nominatim.openstreetmap.org/search?q=$value&format=json&polygon_geojson=1&addressdetails=1&accept-language=${widget.language}${widget.countryCodes == null ? '' : '&countrycodes=${widget.countryCodes}'}";
-                      var response = await client.get(Uri.parse(url));
-                      var decodedResponse =
+                        var client = http.Client();
+                        try {
+                          String url =
+                              "https://nominatim.openstreetmap.org/search?q=$value&format=json&polygon_geojson=1&addressdetails=1&accept-language=${widget.language}${widget.countryCodes == null ? '' : '&countrycodes=${widget.countryCodes}'}";
+                          var response = await client.get(Uri.parse(url));
+                          var decodedResponse =
                           jsonDecode(utf8.decode(response.bodyBytes))
-                              as List<dynamic>;
-                      _options = decodedResponse
-                          .map((e) => _getLocationData(e))
-                          .toList();
+                          as List<dynamic>;
+                          _options = decodedResponse
+                              .map((e) => _getLocationData(e))
+                              .toList();
 
-                      setState(() {});
-                    } on Exception catch (e) {
-                      onError(e);
-                    } finally {
-                      client.close();
-                    }
-                  });
+                          setState(() {});
+                        } on Exception catch (e) {
+                          onError(e);
+                        } finally {
+                          client.close();
+                        }
+                      });
                 }),
           ),
           _buildSelectCurrentPositionButton(),
@@ -429,12 +431,12 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
       padding: const EdgeInsets.symmetric(vertical: 5),
       margin: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: _defaultSearchBarColor!))),
+          border: Border(bottom: BorderSide(color: _defaultSearchBarColor))),
       child: TextButton(
         onPressed: (() async {
           final currentPos = await _determinePosition();
           _addToHistory(currentPos);
-          widget.onPicked!(currentPos);
+          widget.onPicked(currentPos);
         }),
         child: Row(children: [
           Container(
@@ -449,7 +451,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
                 ? 195
                 : MediaQuery.of(context).size.width - 120,
             child: Text(
-              widget.currentPositionButtonText!,
+              widget.currentPositionButtonText,
               style: TextStyle(
                   color: widget.searchBarTextColor,
                   fontSize: 16,
@@ -483,7 +485,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
 
             // height: MediaQuery.of(context).size.height - 300,
             child: isLoading
-                ? Center(child: widget.loadingWidget!)
+                ? Center(child: widget.loadingWidget)
                 : _buildSearchBar()));
   }
 
@@ -491,9 +493,12 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
   ///
   Widget _buildScaffold() {
     return Scaffold(
+      appBar: new AppBar(
+        title: new Text('Search Location'),
+      ),
       body: SafeArea(
           child: isLoading
-              ? Center(child: widget.loadingWidget!)
+              ? Center(child: widget.loadingWidget)
               : _buildSearchBar()),
     );
   }
@@ -505,19 +510,19 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
 }
 
 class LocationSearch {
-  static Future<LocationData?> show({
-    required BuildContext context,
-    void Function(Exception e)? onError,
-    String? language = 'en',
-    List<String>? countryCodes,
-    Color? searchBarBackgroundColor,
-    Color? searchBarTextColor = Colors.black87,
-    String? searchBarHintText = 'Search location',
-    String? currentPositionButtonText = 'Use current location',
-    Color? searchBarHintColor = Colors.black87,
-    bool? lightAdress = false,
-    Color? iconColor = Colors.grey,
-    Widget? loadingWidget,
+  static Future<LocationData> show({
+    BuildContext context,
+    void Function(Exception e) onError,
+    String language = 'en',
+    List<String> countryCodes,
+    Color searchBarBackgroundColor,
+    Color searchBarTextColor = Colors.black87,
+    String searchBarHintText = 'Search location',
+    String currentPositionButtonText = 'Use current location',
+    Color searchBarHintColor = Colors.black87,
+    bool lightAdress = false,
+    Color iconColor = Colors.grey,
+    Widget loadingWidget,
     Mode mode = Mode.fullscreen,
     int historyMaxLength = 5,
   }) {

@@ -10,10 +10,10 @@ class LocationData {
   final double longitude;
   final Map<String, dynamic> addressData;
   LocationData(
-      {required this.address,
-      required this.latitude,
-      required this.longitude,
-      required this.addressData});
+      {this.address,
+      this.latitude,
+      this.longitude,
+      this.addressData});
   @override
   String toString() {
     return '$address, $latitude, $longitude';
